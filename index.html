@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>KashiGig Sim — Varanasi Blinkit & Porter Profit Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            blinkit: {
+              DEFAULT: '#F8CB46',
+              dark: '#D4A825',
+              bg: 'rgba(248, 203, 70, 0.14)'
+            },
+            porter: {
+              DEFAULT: '#2962FF',
+              dark: '#1E4BD8',
+              bg: 'rgba(41, 98, 255, 0.14)'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      overscroll-behavior-y: none;
+    }
+
+    /* Custom Range Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      outline: none;
+    }
+    .dark input[type="range"] {
+      background: #334155;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      transition: transform 0.12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.18);
+    }
+
+    /* Hide scrollbars cleanly */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Subtle pulse animation for live hub marker */
+    @keyframes pulseRing {
+      0% { transform: scale(0.85); opacity: 0.85; }
+      100% { transform: scale(2.1); opacity: 0; }
+    }
+    .pulse-ring {
+      animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200 pb-24 md:pb-8">
+
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-emerald-500 to-blue-600 flex items-center justify-center text-white font-extrabold text-base shadow-sm">
+          KG
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="font-bold text-base sm:text-lg tracking-tight leading-none">KashiGig Sim</h1>
+            <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Varanasi</span>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Sigra Dark Store • Lanka–Sigra Belt</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Preset Quick Button -->
+        <button id="btnOpenPresets" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1">
+          <span>⚡ Presets</span>
+        </button>
+        <!-- Theme Toggle -->
+        <button id="btnThemeToggle" aria-label="Toggle Theme" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+          <svg id="iconSun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg id="iconMoon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Desktop Navigation Bar (Hidden on Mobile) -->
+  <nav class="hidden md:block bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 flex items-center gap-2 py-2">
+      <button data-tab="simulator" class="nav-tab active-tab px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <span>🎛️</span> Shift Simulator
+      </button>
+      <button data-tab="map" class="nav-tab px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <span>🗺️</span> Sigra–Lanka Zone Dispatch
+      </button>
+      <button data-tab="planner" class="nav-tab px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <span>⏱️</span> Hourly Hybrid Planner
+      </button>
+      <button data-tab="logs" class="nav-tab px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <span>📒</span> Saved Scenarios & Log
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto px-4 pt-4 space-y-5">
+
+    <!-- Persistent Live KPI Strip -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Daily Net Profit -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Daily Net Profit</span>
+          <span id="badgeProfitStatus" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Optimal</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-1.5">
+          <span id="kpiDailyNet" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">₹542</span>
+          <span class="text-xs text-slate-400">/day</span>
+        </div>
+        <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 flex justify-between">
+          <span>Gross: <strong id="kpiDailyGross" class="text-slate-700 dark:text-slate-200 font-mono">₹815</strong></span>
+          <span>Cost: <strong id="kpiDailyCost" class="text-rose-500 font-mono">-₹273</strong></span>
+        </div>
+      </div>
+
+      <!-- Monthly Projection (26 Days) -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Monthly Net (26d)</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400">Take-Home</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-1.5">
+          <span id="kpiMonthlyNet" class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">₹14,092</span>
+        </div>
+        <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 flex justify-between">
+          <span>30d: <strong id="kpiMonthly30" class="text-slate-700 dark:text-slate-200 font-mono">₹16,260</strong></span>
+          <span>Margin: <strong id="kpiMarginPct" class="text-emerald-600 dark:text-emerald-400 font-mono">66.5%</strong></span>
+        </div>
+      </div>
+
+      <!-- Effective Hourly & Distance -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Net Hourly Rate</span>
+          <span id="kpiTotalHoursBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">8.0 hrs</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-1.5">
+          <span id="kpiHourlyNet" class="text-2xl sm:text-3xl font-extrabold font-mono text-amber-500">₹68</span>
+          <span class="text-xs text-slate-400">/hr</span>
+        </div>
+        <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 flex justify-between">
+          <span>Total Run: <strong id="kpiTotalKm" class="text-slate-700 dark:text-slate-200 font-mono">94 km</strong></span>
+          <span>Orders: <strong id="kpiTotalOrders" class="text-slate-700 dark:text-slate-200 font-mono">15</strong></span>
+        </div>
+      </div>
+
+      <!-- Platform Split Ratio -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Revenue Split</span>
+          <span class="text-[10px] font-semibold text-slate-400">Blinkit vs Porter</span>
+        </div>
+        <div class="my-2">
+          <div class="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
+            <div id="barBlinkitShare" class="bg-amber-400 h-full transition-all duration-300" style="width: 40%"></div>
+            <div id="barPorterShare" class="bg-blue-600 h-full transition-all duration-300" style="width: 60%"></div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[11px] font-mono">
+          <span class="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span id="kpiBlinkitEarn">₹320</span>
+          </span>
+          <span class="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold">
+            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+            <span id="kpiPorterEarn">₹495</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: SHIFT SIMULATOR (PRIMARY WORKSPACE) -->
+    <!-- ========================================== -->
+    <section id="tab-simulator" class="tab-panel space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- Left Column: Controls (7 cols) -->
+        <div class="lg:col-span-7 space-y-4">
+
+          <!-- Blinkit Dark Store Sigra Card -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-extrabold text-sm">B</div>
+                <div>
+                  <h2 class="font-bold text-sm sm:text-base">Blinkit — Sigra Dark Store Hub</h2>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Hyperlocal 1.5–2.2 km radius (Rathyatra, Mahmoorganj, Shastri Nagar)</p>
+                </div>
+              </div>
+              <span class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-400/15 text-amber-700 dark:text-amber-300" id="blinkitSubTotal">Net: ₹198</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3.5">
+              <!-- Hours on Blinkit -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Shift Hours (Blinkit)</span>
+                  <span class="font-mono font-bold text-amber-600 dark:text-amber-400"><span id="valBlinkitHours">4</span> hrs</span>
+                </div>
+                <input type="range" id="inBlinkitHours" min="0" max="12" step="0.5" value="4" />
+              </div>
+
+              <!-- Orders per Hour -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Orders / Hour</span>
+                  <span class="font-mono font-bold text-amber-600 dark:text-amber-400"><span id="valBlinkitOph">2.5</span> ord/hr</span>
+                </div>
+                <input type="range" id="inBlinkitOph" min="1" max="4" step="0.25" value="2.5" />
+              </div>
+
+              <!-- Base Payout per Order -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Base Payout / Order</span>
+                  <span class="font-mono font-bold text-slate-800 dark:text-slate-200">₹<span id="valBlinkitBase">22</span></span>
+                </div>
+                <input type="range" id="inBlinkitBase" min="15" max="35" step="1" value="22" />
+              </div>
+
+              <!-- Peak Surge / Incentive per Order -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Peak Surge / Incentive</span>
+                  <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">+₹<span id="valBlinkitSurge">10</span>/ord</span>
+                </div>
+                <input type="range" id="inBlinkitSurge" min="0" max="25" step="1" value="10" />
+              </div>
+
+              <!-- Avg Distance per Order -->
+              <div class="sm:col-span-2">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Avg Drop Distance (incl. return to Sigra hub)</span>
+                  <span class="font-mono font-bold text-slate-800 dark:text-slate-200"><span id="valBlinkitDist">2.4</span> km/ord</span>
+                </div>
+                <input type="range" id="inBlinkitDist" min="1.2" max="5.0" step="0.1" value="2.4" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Porter Lanka-Sigra Belt Card -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-extrabold text-sm">P</div>
+                <div>
+                  <h2 class="font-bold text-sm sm:text-base">Porter — Lanka–Sigra Commercial Belt</h2>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">B2B parcels, electronics, wholesale (Bhelupur, Durgakund, Godowlia, Cantt)</p>
+                </div>
+              </div>
+              <span class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-blue-600/15 text-blue-600 dark:text-blue-300" id="porterSubTotal">Net: ₹344</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3.5">
+              <!-- Hours on Porter -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Shift Hours (Porter)</span>
+                  <span class="font-mono font-bold text-blue-600 dark:text-blue-400"><span id="valPorterHours">4</span> hrs</span>
+                </div>
+                <input type="range" id="inPorterHours" min="0" max="12" step="0.5" value="4" />
+              </div>
+
+              <!-- Paid KM per Hour -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Paid Trip KM / Hour</span>
+                  <span class="font-mono font-bold text-blue-600 dark:text-blue-400"><span id="valPorterPaidKmHr">14.5</span> km/hr</span>
+                </div>
+                <input type="range" id="inPorterPaidKmHr" min="6" max="25" step="0.5" value="14.5" />
+              </div>
+
+              <!-- Net Rate per KM (After 15% Porter Commission) -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Rider Net Rate / KM (Post-15% fee)</span>
+                  <span class="font-mono font-bold text-slate-800 dark:text-slate-200">₹<span id="valPorterRateKm">8.5</span>/km</span>
+                </div>
+                <input type="range" id="inPorterRateKm" min="6.0" max="12.0" step="0.5" value="8.5" />
+              </div>
+
+              <!-- Deadhead / Empty Return % -->
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Empty / Pickup KM Ratio</span>
+                  <span class="font-mono font-bold text-rose-500"><span id="valPorterDeadhead">20</span>%</span>
+                </div>
+                <input type="range" id="inPorterDeadhead" min="5" max="60" step="5" value="20" />
+              </div>
+            </div>
+
+            <!-- Belt Filter Toggle -->
+            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-medium text-slate-600 dark:text-slate-300">Order Acceptance Filter:</span>
+              <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                <button type="button" data-belt="core" class="belt-btn px-2.5 py-1 rounded-md font-semibold bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-300">Lanka–Sigra Core (≤8km)</button>
+                <button type="button" data-belt="outer" class="belt-btn px-2.5 py-1 rounded-md font-semibold text-slate-600 dark:text-slate-400">Accept Outer (20km+)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vehicle & Fuel Economics Card -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="text-base">⛽</span>
+                <h2 class="font-bold text-sm sm:text-base">Vehicle & Operating Cost Parameters</h2>
+              </div>
+              <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 text-xs">
+                <button type="button" data-vehicle="petrol" class="veh-btn px-2.5 py-1 rounded-md font-semibold bg-white dark:bg-slate-700 shadow-sm text-emerald-600 dark:text-emerald-400">Petrol Bike</button>
+                <button type="button" data-vehicle="ev" class="veh-btn px-2.5 py-1 rounded-md font-semibold text-slate-600 dark:text-slate-400">EV Scooter</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3.5">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span id="lblFuelPrice" class="font-medium text-slate-600 dark:text-slate-300">Petrol Price</span>
+                  <span class="font-mono font-bold">₹<span id="valFuelPrice">100</span></span>
+                </div>
+                <input type="range" id="inFuelPrice" min="80" max="120" step="1" value="100" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span id="lblMileage" class="font-medium text-slate-600 dark:text-slate-300">Mileage</span>
+                  <span class="font-mono font-bold"><span id="valMileage">48</span> km/L</span>
+                </div>
+                <input type="range" id="inMileage" min="30" max="80" step="1" value="48" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-600 dark:text-slate-300">Maint. + Rental/Day</span>
+                  <span class="font-mono font-bold">₹<span id="valFixedMaint">45</span></span>
+                </div>
+                <input type="range" id="inFixedMaint" min="20" max="350" step="5" value="45" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Visual Breakdown & Strategy Engine (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+
+          <!-- Unit Economics Waterfall Card -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-sm sm:text-base">Daily P&L Waterfall Breakdown</h3>
+              <button id="btnSaveScenario" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+                + Save Setup
+              </button>
+            </div>
+
+            <!-- Canvas Bar Chart -->
+            <div class="w-full h-48 bg-slate-50 dark:bg-slate-950/60 rounded-xl p-2 border border-slate-100 dark:border-slate-800">
+              <canvas id="pnlCanvas" class="w-full h-full"></canvas>
+            </div>
+
+            <!-- Detailed Ledger Table -->
+            <div class="mt-3 space-y-2 text-xs">
+              <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-500 dark:text-slate-400">Blinkit Gross (<span id="ledBlinkitOrd">10</span> orders @ ₹<span id="ledBlinkitRate">32</span>)</span>
+                <span id="ledBlinkitGross" class="font-mono font-bold text-amber-600 dark:text-amber-400">₹320</span>
+              </div>
+              <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-500 dark:text-slate-400">Porter Gross (<span id="ledPorterKm">58</span> paid km @ ₹<span id="ledPorterRate">8.5</span>)</span>
+                <span id="ledPorterGross" class="font-mono font-bold text-blue-600 dark:text-blue-400">₹493</span>
+              </div>
+              <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-500 dark:text-slate-400">Fuel/Charging (<span id="ledTotalKm">94</span> total km @ ₹<span id="ledCostPerKm">2.08</span>/km)</span>
+                <span id="ledFuelCost" class="font-mono font-bold text-rose-500">-₹196</span>
+              </div>
+              <div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-500 dark:text-slate-400">Wear, Oil & Daily Fixed Cost</span>
+                <span id="ledMaintCost" class="font-mono font-bold text-rose-500">-₹45</span>
+              </div>
+              <div class="flex justify-between pt-1.5 text-sm font-extrabold">
+                <span>Net Daily Take-Home</span>
+                <span id="ledNetProfit" class="font-mono text-emerald-600 dark:text-emerald-400">₹572</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smart Varanasi Profit Advisor -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-900 dark:to-slate-950 text-white border border-slate-700 rounded-2xl p-4 shadow-md">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-base">🧠</span>
+              <h3 class="font-bold text-sm tracking-wide uppercase text-emerald-400">Varanasi Route Intelligence</h3>
+            </div>
+            <p id="advisorHeadline" class="text-xs sm:text-sm font-semibold text-slate-100 leading-relaxed">
+              Hybrid Mode Active: Switching to Porter during afternoon lull (11 AM–4 PM) boosts hourly yield by +38% over base Blinkit payouts.
+            </p>
+            <ul id="advisorTips" class="mt-2.5 space-y-1.5 text-[11px] text-slate-300 list-disc pl-4">
+              <li>Keep Porter drops inside Lanka–Bhelupur–Sigra–Godowlia loop to maintain 80%+ paid km ratio.</li>
+              <li>Return to Sigra Dark Store by 6:30 PM when grocery surge (+₹10–₹15/order) kicks in.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================= -->
+    <!-- TAB 2: INTERACTIVE SIGRA–LANKA ZONE DISPATCH MAP  -->
+    <!-- ================================================= -->
+    <section id="tab-map" class="tab-panel hidden space-y-4">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 class="font-bold text-base">Varanasi Corridor Dispatch Simulator</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Tap any node or simulated order ping to test profit & deadhead impact in real time.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnSimulatePing" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition">
+              🎲 Dispatch Random Order
+            </button>
+            <button id="btnResetSimRun" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold transition">
+              Reset Run
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-4">
+          <!-- Interactive SVG Corridor Map (7 cols) -->
+          <div class="lg:col-span-7 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-3 relative overflow-hidden">
+            <svg id="varanasiMapSvg" viewBox="0 0 600 420" class="w-full h-auto select-none">
+              <!-- Background Grid -->
+              <defs>
+                <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="1"/>
+                </pattern>
+              </defs>
+              <rect width="600" height="420" fill="url(#grid)" />
+
+              <!-- Ganga River Curve (East Edge) -->
+              <path d="M 520 0 Q 485 140 505 260 T 540 420 L 600 420 L 600 0 Z" fill="rgba(56, 189, 248, 0.16)" />
+              <text x="532" y="210" fill="#0284c7" font-size="11" font-weight="700" transform="rotate(82 532,210)" opacity="0.7">RIVER GANGA</text>
+
+              <!-- Blinkit Sigra 2km Radius Circle -->
+              <circle cx="260" cy="175" r="88" fill="rgba(248, 203, 70, 0.12)" stroke="#F8CB46" stroke-width="1.5" stroke-dasharray="5,5" />
+              <text x="195" y="102" fill="#d97706" font-size="10" font-weight="700">BLINKIT SIGRA 2KM ZONE</text>
+
+              <!-- Porter Commercial Belt Polygon (Sigra - Rathyatra - Bhelupur - Durgakund - Lanka) -->
+              <polygon points="260,175 315,215 345,275 320,330 295,375 235,340 215,250" fill="rgba(41, 98, 255, 0.08)" stroke="#2962FF" stroke-width="1.5" stroke-dasharray="4,4" />
+              <text x="145" y="310" fill="#2563eb" font-size="10" font-weight="700">PORTER HIGH-CHURN BELT</text>
+
+              <!-- Arterial Roads -->
+              <g stroke="#94a3b8" stroke-width="3" stroke-linecap="round" opacity="0.45">
+                <!-- Cantt to Sigra -->
+                <line x1="170" y1="85" x2="260" y2="175" />
+                <!-- Sigra to Rathyatra to Bhelupur to Lanka -->
+                <line x1="260" y1="175" x2="315" y2="215" />
+                <line x1="315" y1="215" x2="345" y2="275" />
+                <line x1="345" y1="275" x2="320" y2="330" />
+                <line x1="320" y1="330" x2="295" y2="375" />
+                <!-- Rathyatra to Godowlia -->
+                <line x1="315" y1="215" x2="435" y2="205" />
+                <!-- Sigra to Mahmoorganj / Manduadih -->
+                <line x1="260" y1="175" x2="155" y2="210" />
+                <!-- Outer Route to Ramnagar / Babatpur -->
+                <line x1="295" y1="375" x2="465" y2="395" stroke-dasharray="6,4" />
+                <line x1="170" y1="85" x2="65" y2="40" stroke-dasharray="6,4" />
+              </g>
+
+              <!-- Active Route Highlight Line -->
+              <line id="svgActiveRoute" x1="260" y1="175" x2="295" y2="375" stroke="#10b981" stroke-width="4" stroke-linecap="round" />
+
+              <!-- Location Nodes -->
+              <g class="map-node cursor-pointer" data-node="sigra">
+                <circle cx="260" cy="175" r="16" fill="rgba(248,203,70,0.3)" class="pulse-ring" />
+                <circle cx="260" cy="175" r="9" fill="#F8CB46" stroke="#0f172a" stroke-width="2" />
+                <text x="273" y="172" font-size="11" font-weight="800" fill="currentColor">Sigra Dark Store</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="rathyatra">
+                <circle cx="315" cy="215" r="7" fill="#3b82f6" stroke="#fff" stroke-width="1.5" />
+                <text x="326" y="218" font-size="10" font-weight="600" fill="currentColor">Rathyatra</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="godowlia">
+                <circle cx="435" cy="205" r="7" fill="#3b82f6" stroke="#fff" stroke-width="1.5" />
+                <text x="415" y="192" font-size="10" font-weight="600" fill="currentColor">Godowlia</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="bhelupur">
+                <circle cx="345" cy="275" r="7" fill="#3b82f6" stroke="#fff" stroke-width="1.5" />
+                <text x="356" y="278" font-size="10" font-weight="600" fill="currentColor">Bhelupur</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="durgakund">
+                <circle cx="320" cy="330" r="7" fill="#3b82f6" stroke="#fff" stroke-width="1.5" />
+                <text x="332" y="333" font-size="10" font-weight="600" fill="currentColor">Durgakund</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="lanka">
+                <circle cx="295" cy="375" r="9" fill="#2962FF" stroke="#fff" stroke-width="2" />
+                <text x="255" y="395" font-size="11" font-weight="800" fill="currentColor">Lanka (BHU Gate)</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="mahmoorganj">
+                <circle cx="155" cy="210" r="7" fill="#f59e0b" stroke="#fff" stroke-width="1.5" />
+                <text x="85" y="214" font-size="10" font-weight="600" fill="currentColor">Mahmoorganj</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="cantt">
+                <circle cx="170" cy="85" r="7" fill="#3b82f6" stroke="#fff" stroke-width="1.5" />
+                <text x="182" y="88" font-size="10" font-weight="600" fill="currentColor">Cantt Station</text>
+              </g>
+
+              <g class="map-node cursor-pointer" data-node="outer">
+                <circle cx="465" cy="395" r="7" fill="#ef4444" stroke="#fff" stroke-width="1.5" />
+                <text x="415" y="412" font-size="10" font-weight="700" fill="#ef4444">Outer (Ramnagar/22km)</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Live Dispatch Feed & Mini-Game Stats (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col justify-between space-y-3">
+            <!-- Active Order Card -->
+            <div id="liveOrderCard" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span id="pingPlatformBadge" class="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-blue-600/15 text-blue-600 dark:text-blue-400">PORTER PARCEL</span>
+                <span id="pingTimeEst" class="text-xs font-mono text-slate-500">Est. 24 mins</span>
+              </div>
+              <div>
+                <h4 id="pingTitle" class="font-bold text-sm">Sigra (IP Mall) → Lanka (BHU Gate)</h4>
+                <p id="pingDesc" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Medical & stationery carton • High chance of return order at Lanka</p>
+              </div>
+              <div class="grid grid-cols-3 gap-2 pt-1 text-center">
+                <div class="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-400">Distance</div>
+                  <div id="pingDist" class="font-mono font-bold text-xs">5.8 km</div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-400">Net Payout</div>
+                  <div id="pingPayout" class="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">₹52</div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-400">True Profit</div>
+                  <div id="pingNetProfit" class="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">+₹39</div>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <button id="btnAcceptPing" class="py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+                  ✓ Accept Order
+                </button>
+                <button id="btnSkipPing" class="py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold transition">
+                  ✕ Skip / Next
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Shift Run Scoreboard -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold uppercase text-slate-500">Live Dispatch Session</span>
+                <span id="runClock" class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800">0h 00m / 8h</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div class="text-[10px] text-slate-400">Completed</div>
+                  <div id="runOrders" class="font-mono font-extrabold text-base">0</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400">Total KM</div>
+                  <div id="runKm" class="font-mono font-extrabold text-base">0.0</div>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400">Session Net</div>
+                  <div id="runProfit" class="font-mono font-extrabold text-base text-emerald-600 dark:text-emerald-400">₹0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================= -->
+    <!-- TAB 3: HOURLY HYBRID SCHEDULE PLANNER (8 AM–11 PM) -->
+    <!-- ================================================= -->
+    <section id="tab-planner" class="tab-panel hidden space-y-4">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 class="font-bold text-base">Time-Block Hybrid Shift Builder (Varanasi Demand Curve)</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Tap each hour slot to assign Blinkit (Sigra), Porter (Lanka–Sigra), or Break. Syncs directly with Simulator!</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnAutoOptimizeBlocks" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">
+              ✨ Auto-Optimize 8-Hr Shift
+            </button>
+            <button id="btnApplyBlocksToSim" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition">
+              Apply to Simulator →
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary of Selected Blocks -->
+        <div class="grid grid-cols-3 gap-3 my-3">
+          <div class="p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 text-center">
+            <div class="text-[11px] font-semibold text-amber-700 dark:text-amber-300">Blinkit Slots</div>
+            <div id="blkCountBlinkit" class="font-mono font-extrabold text-lg text-amber-600 dark:text-amber-400">4 hrs</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-blue-600/10 border border-blue-600/30 text-center">
+            <div class="text-[11px] font-semibold text-blue-700 dark:text-blue-300">Porter Slots</div>
+            <div id="blkCountPorter" class="font-mono font-extrabold text-lg text-blue-600 dark:text-blue-400">4 hrs</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center">
+            <div class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">Est. Block Net</div>
+            <div id="blkEstProfit" class="font-mono font-extrabold text-lg text-emerald-600 dark:text-emerald-400">₹590</div>
+          </div>
+        </div>
+
+        <!-- Hourly Grid -->
+        <div id="hourlySlotsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================= -->
+    <!-- TAB 4: SAVED SCENARIOS & REAL EARNINGS LOG        -->
+    <!-- ================================================= -->
+    <section id="tab-logs" class="tab-panel hidden space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Saved Scenarios -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="font-bold text-base">Saved Strategy Presets</h2>
+            <span class="text-xs text-slate-400">Stored in Browser</span>
+          </div>
+          <div id="savedScenariosList" class="mt-3 space-y-2.5">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Daily Actual Shift Tracker -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="font-bold text-base">Actual Varanasi Shift Log</h2>
+            <button id="btnClearLogs" class="text-xs text-rose-500 hover:underline font-semibold">Clear All</button>
+          </div>
+
+          <form id="formAddLog" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+            <input type="text" id="logNote" placeholder="e.g. Sigra+Lanka 8h" required class="col-span-2 sm:col-span-1 px-2.5 py-2 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+            <input type="number" id="logGross" placeholder="Gross ₹" required min="0" class="px-2.5 py-2 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono" />
+            <input type="number" id="logFuel" placeholder="Fuel ₹" required min="0" class="px-2.5 py-2 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono" />
+            <button type="submit" class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">+ Log Day</button>
+          </form>
+
+          <div id="actualLogsList" class="mt-3 space-y-2 max-h-72 overflow-y-auto">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-4 py-1.5 px-1">
+    <button data-tab="simulator" class="mob-nav-tab active-mob-tab flex flex-col items-center justify-center py-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+      <span class="text-base mb-0.5">🎛️</span>
+      <span>Simulator</span>
+    </button>
+    <button data-tab="map" class="mob-nav-tab flex flex-col items-center justify-center py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+      <span class="text-base mb-0.5">🗺️</span>
+      <span>Zone Map</span>
+    </button>
+    <button data-tab="planner" class="mob-nav-tab flex flex-col items-center justify-center py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+      <span class="text-base mb-0.5">⏱️</span>
+      <span>Planner</span>
+    </button>
+    <button data-tab="logs" class="mob-nav-tab flex flex-col items-center justify-center py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+      <span class="text-base mb-0.5">📒</span>
+      <span>Saved/Log</span>
+    </button>
+  </nav>
+
+  <!-- Presets Modal -->
+  <div id="presetsModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-4 shadow-xl space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+        <h3 class="font-bold text-base">⚡ Varanasi Strategy Presets</h3>
+        <button id="btnClosePresets" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">✕</button>
+      </div>
+      <div class="space-y-2">
+        <button data-preset="hybrid_pro" class="preset-choice w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm text-emerald-600 dark:text-emerald-400">1. Hybrid Pro (Sigra Peak + Lanka Porter)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600">Recommended</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">4h Blinkit peak surge + 4h Porter core belt (≤8km). Maximizes ₹/hr while controlling fuel.</p>
+        </button>
+
+        <button data-preset="blinkit_only" class="preset-choice w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-amber-400 transition">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm text-amber-600 dark:text-amber-400">2. Pure Blinkit (Sigra Dark Store 8 Hrs)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400/15 text-amber-600">Low KM</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">8h at Sigra hub, 2.5 ord/hr, ₹22 base + ₹6 avg surge. Less fatigue, lower ceiling.</p>
+        </button>
+
+        <button data-preset="porter_grind" class="preset-choice w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 transition">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm text-blue-600 dark:text-blue-400">3. Porter Commercial Grind (Lanka–Godowlia)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/15 text-blue-600">High Gross</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">8h back-to-back B2B parcels in Lanka–Sigra–Cantt belt. High daily distance (~140km).</p>
+        </button>
+
+        <button data-preset="ev_maximizer" class="preset-choice w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-500 transition">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm text-purple-600 dark:text-purple-400">4. EV Scooter Hybrid Maximizer (10 Hrs)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-600">Max Profit</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">5h Blinkit + 5h Porter on EV (₹0.25/km running cost). Slashes fuel expense by 85%.</p>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-16 right-4 z-50 hidden bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 transition-opacity">
+    Saved!
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'kashigig_sim_v1';
+
+      // Default Application State
+      const defaultState = {
+        theme: 'dark',
+        activeTab: 'simulator',
+        params: {
+          blinkitHours: 4,
+          blinkitOph: 2.5,
+          blinkitBase: 22,
+          blinkitSurge: 10,
+          blinkitDist: 2.4,
+          porterHours: 4,
+          porterPaidKmHr: 14.5,
+          porterRateKm: 8.5,
+          porterDeadhead: 20,
+          beltMode: 'core', // 'core' | 'outer'
+          vehicleType: 'petrol', // 'petrol' | 'ev'
+          fuelPrice: 100,
+          mileage: 48,
+          fixedMaint: 45
+        },
+        // Hourly schedule from 08:00 to 22:00 (15 slots)
+        schedule: [
+          { hour: '08:00 AM', zone: 'Sigra Morning Grocery', demand: 'High', mode: 'blinkit' },
+          { hour: '09:00 AM', zone: 'Sigra–Mahmoorganj', demand: 'Peak', mode: 'blinkit' },
+          { hour: '10:00 AM', zone: 'Sigra–Rathyatra', demand: 'Med', mode: 'blinkit' },
+          { hour: '11:00 AM', zone: 'Lanka–Bhelupur B2B', demand: 'High', mode: 'porter' },
+          { hour: '12:00 PM', zone: 'Durgakund–Godowlia', demand: 'High', mode: 'porter' },
+          { hour: '01:00 PM', zone: 'Lunch Break', demand: 'Low', mode: 'off' },
+          { hour: '02:00 PM', zone: 'Sigra–Cantt Parcels', demand: 'Med', mode: 'porter' },
+          { hour: '03:00 PM', zone: 'Lanka–Rathyatra Shop', demand: 'High', mode: 'porter' },
+          { hour: '04:00 PM', zone: 'Tea / Battery Rest', demand: 'Low', mode: 'off' },
+          { hour: '05:00 PM', zone: 'Evening Snack Rush', demand: 'Med', mode: 'off' },
+          { hour: '06:00 PM', zone: 'Sigra Evening Surge', demand: 'Peak', mode: 'blinkit' },
+          { hour: '07:00 PM', zone: 'Sigra–Shastri Nagar', demand: 'Peak', mode: 'off' },
+          { hour: '08:00 PM', zone: 'Dinner Grocery Rush', demand: 'Peak', mode: 'off' },
+          { hour: '09:00 PM', zone: 'Late Night Essentials', demand: 'Med', mode: 'off' }
+        ],
+        savedScenarios: [
+          {
+            id: 'sc_1',
+            name: 'Varanasi Balanced Hybrid (8h)',
+            summary: '4h Blinkit + 4h Porter Core • Petrol',
+            netDaily: 572,
+            params: {
+              blinkitHours: 4, blinkitOph: 2.5, blinkitBase: 22, blinkitSurge: 10, blinkitDist: 2.4,
+              porterHours: 4, porterPaidKmHr: 14.5, porterRateKm: 8.5, porterDeadhead: 20,
+              beltMode: 'core', vehicleType: 'petrol', fuelPrice: 100, mileage: 48, fixedMaint: 45
+            }
+          }
+        ],
+        actualLogs: [
+          { id: 'lg_1', date: 'Sample Day', note: 'Sigra Blinkit + Lanka Porter', gross: 820, fuel: 190, net: 630 }
+        ]
+      };
+
+      // Load or Initialize State
+      let state = loadState();
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return JSON.parse(JSON.stringify(defaultState));
+          const parsed = JSON.parse(raw);
+          return {
+            ...defaultState,
+            ...parsed,
+            params: { ...defaultState.params, ...(parsed.params || {}) }
+          };
+        } catch (e) {
+          return JSON.parse(JSON.stringify(defaultState));
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.warn('localStorage unavailable', e);
+        }
+      }
+
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        clearTimeout(el._timer);
+        el._timer = setTimeout(() => el.classList.add('hidden'), 2200);
+      }
+
+      // Theme Management
+      function applyTheme() {
+        if (state.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+
+      document.getElementById('btnThemeToggle').addEventListener('click', () => {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        applyTheme();
+        saveState();
+        recalculate();
+      });
+
+      // Navigation Tabs
+      function switchTab(tabName) {
+        state.activeTab = tabName;
+        saveState();
+
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+          panel.classList.toggle('hidden', panel.id !== `tab-${tabName}`);
+        });
+
+        // Desktop nav styling
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+          const active = btn.dataset.tab === tabName;
+          btn.classList.toggle('bg-emerald-500/15', active);
+          btn.classList.toggle('text-emerald-600', active);
+          btn.classList.toggle('dark:text-emerald-400', active);
+          btn.classList.toggle('text-slate-600', !active);
+          btn.classList.toggle('dark:text-slate-400', !active);
+        });
+
+        // Mobile nav styling
+        document.querySelectorAll('.mob-nav-tab').forEach(btn => {
+          const active = btn.dataset.tab === tabName;
+          btn.classList.toggle('text-emerald-600', active);
+          btn.classList.toggle('dark:text-emerald-400', active);
+          btn.classList.toggle('font-bold', active);
+          btn.classList.toggle('text-slate-500', !active);
+          btn.classList.toggle('dark:text-slate-400', !active);
+        });
+
+        if (tabName === 'simulator') {
+          requestAnimationFrame(drawChart);
+        }
+      }
+
+      document.querySelectorAll('[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      // Core Unit Economics Calculation Engine
+      function computeEconomics(p) {
+        // Blinkit calculations
+        const blinkitOrders = p.blinkitHours * p.blinkitOph;
+        const blinkitRatePerOrd = p.blinkitBase + p.blinkitSurge;
+        const blinkitGross = blinkitOrders * blinkitRatePerOrd;
+        const blinkitKm = blinkitOrders * p.blinkitDist;
+
+        // Porter calculations
+        const porterPaidKm = p.porterHours * p.porterPaidKmHr;
+        const porterEmptyKm = porterPaidKm * (p.porterDeadhead / 100);
+        const porterTotalKm = porterPaidKm + porterEmptyKm;
+        const porterGross = porterPaidKm * p.porterRateKm;
+        const estPorterOrders = p.porterHours > 0 ? Math.max(1, Math.round(porterPaidKm / (p.beltMode === 'core' ? 6.5 : 14))) : 0;
+
+        // Totals
+        const totalHours = p.blinkitHours + p.porterHours;
+        const totalOrders = Math.round(blinkitOrders) + estPorterOrders;
+        const totalKm = blinkitKm + porterTotalKm;
+        const dailyGross = blinkitGross + porterGross;
+
+        // Energy cost per km
+        const costPerKm = p.vehicleType === 'petrol'
+          ? (p.fuelPrice / p.mileage)
+          : (p.fuelPrice / p.mileage); // For EV: fuelPrice = charge cost/full cycle (e.g. ₹25), mileage = range/charge (e.g. 85km)
+
+        const energyCost = totalKm * costPerKm;
+        const maintCost = totalHours > 0 ? p.fixedMaint : 0;
+        const dailyCost = energyCost + maintCost;
+        const dailyNet = dailyGross - dailyCost;
+
+        // Platform-specific net attribution
+        const blinkitNet = blinkitGross - (blinkitKm * costPerKm) - (totalHours > 0 ? maintCost * (p.blinkitHours / totalHours) : 0);
+        const porterNet = porterGross - (porterTotalKm * costPerKm) - (totalHours > 0 ? maintCost * (p.porterHours / totalHours) : 0);
+
+        const monthlyNet26 = dailyNet * 26;
+        const monthlyNet30 = dailyNet * 30;
+        const hourlyNet = totalHours > 0 ? dailyNet / totalHours : 0;
+        const marginPct = dailyGross > 0 ? (dailyNet / dailyGross) * 100 : 0;
+
+        return {
+          blinkitOrders,
+          blinkitRatePerOrd,
+          blinkitGross,
+          blinkitKm,
+          blinkitNet,
+          porterPaidKm,
+          porterTotalKm,
+          porterGross,
+          porterNet,
+          totalHours,
+          totalOrders,
+          totalKm,
+          dailyGross,
+          costPerKm,
+          energyCost,
+          maintCost,
+          dailyCost,
+          dailyNet,
+          monthlyNet26,
+          monthlyNet30,
+          hourlyNet,
+          marginPct
+        };
+      }
+
+      let latestMetrics = null;
+
+      function syncInputsFromState() {
+        const p = state.params;
+        document.getElementById('inBlinkitHours').value = p.blinkitHours;
+        document.getElementById('inBlinkitOph').value = p.blinkitOph;
+        document.getElementById('inBlinkitBase').value = p.blinkitBase;
+        document.getElementById('inBlinkitSurge').value = p.blinkitSurge;
+        document.getElementById('inBlinkitDist').value = p.blinkitDist;
+
+        document.getElementById('inPorterHours').value = p.porterHours;
+        document.getElementById('inPorterPaidKmHr').value = p.porterPaidKmHr;
+        document.getElementById('inPorterRateKm').value = p.porterRateKm;
+        document.getElementById('inPorterDeadhead').value = p.porterDeadhead;
+
+        document.getElementById('inFuelPrice').value = p.fuelPrice;
+        document.getElementById('inMileage').value = p.mileage;
+        document.getElementById('inFixedMaint').value = p.fixedMaint;
+
+        // Belt buttons
+        document.querySelectorAll('.belt-btn').forEach(btn => {
+          const active = btn.dataset.belt === p.beltMode;
+          btn.className = active
+            ? 'belt-btn px-2.5 py-1 rounded-md font-semibold bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-300'
+            : 'belt-btn px-2.5 py-1 rounded-md font-semibold text-slate-600 dark:text-slate-400';
+        });
+
+        // Vehicle buttons & labels
+        document.querySelectorAll('.veh-btn').forEach(btn => {
+          const active = btn.dataset.vehicle === p.vehicleType;
+          btn.className = active
+            ? 'veh-btn px-2.5 py-1 rounded-md font-semibold bg-white dark:bg-slate-700 shadow-sm text-emerald-600 dark:text-emerald-400'
+            : 'veh-btn px-2.5 py-1 rounded-md font-semibold text-slate-600 dark:text-slate-400';
+        });
+
+        if (p.vehicleType === 'ev') {
+          document.getElementById('lblFuelPrice').textContent = 'Charge Cost';
+          document.getElementById('lblMileage').textContent = 'Range/Charge';
+        } else {
+          document.getElementById('lblFuelPrice').textContent = 'Petrol Price';
+          document.getElementById('lblMileage').textContent = 'Mileage';
+        }
+      }
+
+      function recalculate() {
+        const p = state.params;
+
+        // Update slider value labels
+        document.getElementById('valBlinkitHours').textContent = p.blinkitHours;
+        document.getElementById('valBlinkitOph').textContent = p.blinkitOph;
+        document.getElementById('valBlinkitBase').textContent = p.blinkitBase;
+        document.getElementById('valBlinkitSurge').textContent = p.blinkitSurge;
+        document.getElementById('valBlinkitDist').textContent = p.blinkitDist.toFixed(1);
+
+        document.getElementById('valPorterHours').textContent = p.porterHours;
+        document.getElementById('valPorterPaidKmHr').textContent = p.porterPaidKmHr;
+        document.getElementById('valPorterRateKm').textContent = p.porterRateKm.toFixed(1);
+        document.getElementById('valPorterDeadhead').textContent = p.porterDeadhead;
+
+        document.getElementById('valFuelPrice').textContent = p.fuelPrice;
+        document.getElementById('valMileage').textContent = p.vehicleType === 'ev' ? `${p.mileage} km` : `${p.mileage} km/L`;
+        document.getElementById('valFixedMaint').textContent = p.fixedMaint;
+
+        const m = computeEconomics(p);
+        latestMetrics = m;
+
+        // KPI Cards
+        const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+        document.getElementById('kpiDailyNet').textContent = fmt(m.dailyNet);
+        document.getElementById('kpiDailyGross').textContent = fmt(m.dailyGross);
+        document.getElementById('kpiDailyCost').textContent = '-' + fmt(m.dailyCost);
+
+        document.getElementById('kpiMonthlyNet').textContent = fmt(m.monthlyNet26);
+        document.getElementById('kpiMonthly30').textContent = fmt(m.monthlyNet30);
+        document.getElementById('kpiMarginPct').textContent = `${m.marginPct.toFixed(1)}%`;
+
+        document.getElementById('kpiHourlyNet').textContent = fmt(m.hourlyNet);
+        document.getElementById('kpiTotalHoursBadge').textContent = `${m.totalHours.toFixed(1)} hrs`;
+        document.getElementById('kpiTotalKm').textContent = `${Math.round(m.totalKm)} km`;
+        document.getElementById('kpiTotalOrders').textContent = m.totalOrders;
+
+        // Status Badge
+        const badge = document.getElementById('badgeProfitStatus');
+        if (m.hourlyNet >= 75) {
+          badge.textContent = 'High Yield';
+          badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+        } else if (m.hourlyNet >= 50) {
+          badge.textContent = 'Balanced';
+          badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400';
+        } else {
+          badge.textContent = 'Low Margin';
+          badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400';
+        }
+
+        // Revenue Split Bar
+        const bShare = m.dailyGross > 0 ? (m.blinkitGross / m.dailyGross) * 100 : 50;
+        const pShare = 100 - bShare;
+        document.getElementById('barBlinkitShare').style.width = `${bShare}%`;
+        document.getElementById('barPorterShare').style.width = `${pShare}%`;
+        document.getElementById('kpiBlinkitEarn').textContent = fmt(m.blinkitGross);
+        document.getElementById('kpiPorterEarn').textContent = fmt(m.porterGross);
+
+        // Card Sub-badges
+        document.getElementById('blinkitSubTotal').textContent = `Net: ${fmt(m.blinkitNet)}`;
+        document.getElementById('porterSubTotal').textContent = `Net: ${fmt(m.porterNet)}`;
+
+        // Waterfall Ledger
+        document.getElementById('ledBlinkitOrd').textContent = m.blinkitOrders.toFixed(1);
+        document.getElementById('ledBlinkitRate').textContent = m.blinkitRatePerOrd;
+        document.getElementById('ledBlinkitGross').textContent = fmt(m.blinkitGross);
+
+        document.getElementById('ledPorterKm').textContent = Math.round(m.porterPaidKm);
+        document.getElementById('ledPorterRate').textContent = p.porterRateKm.toFixed(1);
+        document.getElementById('ledPorterGross').textContent = fmt(m.porterGross);
+
+        document.getElementById('ledTotalKm').textContent = Math.round(m.totalKm);
+        document.getElementById('ledCostPerKm').textContent = m.costPerKm.toFixed(2);
+        document.getElementById('ledFuelCost').textContent = '-' + fmt(m.energyCost);
+        document.getElementById('ledMaintCost').textContent = '-' + fmt(m.maintCost);
+        document.getElementById('ledNetProfit').textContent = fmt(m.dailyNet);
+
+        updateAdvisor(p, m);
+        drawChart();
+      }
+
+      function updateAdvisor(p, m) {
+        const headline = document.getElementById('advisorHeadline');
+        const tips = document.getElementById('advisorTips');
+        const tipItems = [];
+
+        if (p.blinkitHours > 0 && p.porterHours > 0) {
+          headline.textContent = `Hybrid Strategy (${p.blinkitHours}h Blinkit + ${p.porterHours}h Porter) generates ₹${Math.round(m.hourlyNet)}/hr net across ${Math.round(m.totalKm)} km.`;
+        } else if (p.blinkitHours > 0) {
+          headline.textContent = `Pure Sigra Blinkit mode keeps riding low (${Math.round(m.totalKm)} km), but depends heavily on ₹${p.blinkitSurge}/order surge.`;
+        } else {
+          headline.textContent = `Full-time Lanka–Sigra Porter mode yields high gross (₹${Math.round(m.porterGross)}), requiring strict empty-km control.`;
+        }
+
+        if (p.porterDeadhead > 25) {
+          tipItems.push(`High Empty KM (${p.porterDeadhead}%): Avoid outer Babatpur/Ramnagar drops unless fare exceeds ₹11/km; stick to Sigra–Lanka–Godowlia loop.`);
+        } else {
+          tipItems.push(`Tight Empty KM (${p.porterDeadhead}%): Chaining B2B orders between Rathyatra, Bhelupur, and Lanka preserves ₹${Math.round(m.porterNet)} net.`);
+        }
+
+        if (p.blinkitSurge < 8 && p.blinkitHours > 2) {
+          tipItems.push(`Blinkit base payout (₹${p.blinkitBase}) has thin margins. Shift non-peak afternoon hours (12 PM–5 PM) to Porter.`);
+        } else {
+          tipItems.push(`Peak-hour Blinkit at Sigra Dark Store (8–10 AM & 6:30–9:30 PM) maximizes orders/hr within a 2 km radius.`);
+        }
+
+        if (p.vehicleType === 'petrol' && m.totalKm > 100) {
+          const evSave = Math.round((m.energyCost - (m.totalKm * 0.30)) * 26);
+          tipItems.push(`At ${Math.round(m.totalKm)} km/day, switching to a rented/owned EV saves ~₹${evSave.toLocaleString('en-IN')}/month in fuel.`);
+        }
+
+        tips.innerHTML = tipItems.map(t => `<li>${t}</li>`).join('');
+      }
+
+      // Lightweight HTML5 Canvas Waterfall Bar Chart
+      function drawChart() {
+        const canvas = document.getElementById('pnlCanvas');
+        if (!canvas || !latestMetrics) return;
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width === 0) return;
+
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width;
+        const h = rect.height;
+        const isDark = state.theme === 'dark';
+
+        ctx.clearRect(0, 0, w, h);
+
+        const data = [
+          { label: 'Blinkit', val: Math.max(0, latestMetrics.blinkitGross), color: '#F8CB46' },
+          { label: 'Porter', val: Math.max(0, latestMetrics.porterGross), color: '#2962FF' },
+          { label: 'Fuel+Maint', val: Math.max(0, latestMetrics.dailyCost), color: '#f43f5e' },
+          { label: 'Net Profit', val: Math.max(0, latestMetrics.dailyNet), color: '#10b981' }
+        ];
+
+        const maxVal = Math.max(600, ...data.map(d => d.val)) * 1.18;
+        const padLeft = 14;
+        const padRight = 14;
+        const padTop = 24;
+        const padBottom = 26;
+        const chartH = h - padTop - padBottom;
+        const slotW = (w - padLeft - padRight) / data.length;
+        const barW = Math.min(48, slotW * 0.56);
+
+        // Subtle horizontal baseline
+        ctx.strokeStyle = isDark ? 'rgba(148,163,184,0.18)' : 'rgba(148,163,184,0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padLeft, padTop + chartH);
+        ctx.lineTo(w - padRight, padTop + chartH);
+        ctx.stroke();
+
+        data.forEach((item, idx) => {
+          const barH = (item.val / maxVal) * chartH;
+          const x = padLeft + idx * slotW + (slotW - barW) / 2;
+          const y = padTop + chartH - barH;
+
+          // Rounded top bar
+          ctx.fillStyle = item.color;
+          ctx.beginPath();
+          const r = 6;
+          ctx.moveTo(x, y + barH);
+          ctx.lineTo(x, y + r);
+          ctx.quadraticCurveTo(x, y, x + r, y);
+          ctx.lineTo(x + barW - r, y);
+          ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+          ctx.lineTo(x + barW, y + barH);
+          ctx.closePath();
+          ctx.fill();
+
+          // Value above bar
+          ctx.fillStyle = isDark ? '#f1f5f9' : '#0f172a';
+          ctx.font = '700 11px JetBrains Mono, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`₹${Math.round(item.val)}`, x + barW / 2, y - 6);
+
+          // Label below bar
+          ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+          ctx.font = '600 10px Inter, sans-serif';
+          ctx.fillText(item.label, x + barW / 2, padTop + chartH + 16);
+        });
+      }
+
+      window.addEventListener('resize', drawChart);
+
+      // Bind Slider Events
+      const sliderMap = [
+        ['inBlinkitHours', 'blinkitHours'],
+        ['inBlinkitOph', 'blinkitOph'],
+        ['inBlinkitBase', 'blinkitBase'],
+        ['inBlinkitSurge', 'blinkitSurge'],
+        ['inBlinkitDist', 'blinkitDist'],
+        ['inPorterHours', 'porterHours'],
+        ['inPorterPaidKmHr', 'porterPaidKmHr'],
+        ['inPorterRateKm', 'porterRateKm'],
+        ['inPorterDeadhead', 'porterDeadhead'],
+        ['inFuelPrice', 'fuelPrice'],
+        ['inMileage', 'mileage'],
+        ['inFixedMaint', 'fixedMaint']
+      ];
+
+      sliderMap.forEach(([elId, key]) => {
+        document.getElementById(elId).addEventListener('input', (e) => {
+          state.params[key] = parseFloat(e.target.value);
+          saveState();
+          recalculate();
+        });
+      });
+
+      // Belt Filter Buttons
+      document.querySelectorAll('.belt-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.belt;
+          state.params.beltMode = mode;
+          if (mode === 'core') {
+            state.params.porterDeadhead = 18;
+            state.params.porterRateKm = 8.8;
+          } else {
+            state.params.porterDeadhead = 35;
+            state.params.porterRateKm = 8.0;
+          }
+          syncInputsFromState();
+          saveState();
+          recalculate();
+          showToast(mode === 'core' ? 'Filtered to Lanka–Sigra Core Belt' : 'Outer Varanasi Trips Included');
+        });
+      });
+
+      // Vehicle Type Toggle
+      document.querySelectorAll('.veh-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const v = btn.dataset.vehicle;
+          state.params.vehicleType = v;
+          if (v === 'ev') {
+            state.params.fuelPrice = 25; // ₹25 full charge
+            state.params.mileage = 85;   // 85 km range
+            state.params.fixedMaint = 180; // EV rental / battery amortization
+          } else {
+            state.params.fuelPrice = 100;
+            state.params.mileage = 48;
+            state.params.fixedMaint = 45;
+          }
+          syncInputsFromState();
+          saveState();
+          recalculate();
+        });
+      });
+
+      // Presets Modal Logic
+      const presetsModal = document.getElementById('presetsModal');
+      document.getElementById('btnOpenPresets').addEventListener('click', () => presetsModal.classList.remove('hidden'));
+      document.getElementById('btnClosePresets').addEventListener('click', () => presetsModal.classList.add('hidden'));
+      presetsModal.addEventListener('click', (e) => {
+        if (e.target === presetsModal) presetsModal.classList.add('hidden');
+      });
+
+      const presetConfigs = {
+        hybrid_pro: {
+          blinkitHours: 4, blinkitOph: 2.75, blinkitBase: 22, blinkitSurge: 10, blinkitDist: 2.2,
+          porterHours: 4, porterPaidKmHr: 15, porterRateKm: 8.5, porterDeadhead: 18,
+          beltMode: 'core', vehicleType: 'petrol', fuelPrice: 100, mileage: 48, fixedMaint: 45
+        },
+        blinkit_only: {
+          blinkitHours: 8, blinkitOph: 2.5, blinkitBase: 22, blinkitSurge: 6, blinkitDist: 2.4,
+          porterHours: 0, porterPaidKmHr: 14, porterRateKm: 8.5, porterDeadhead: 20,
+          beltMode: 'core', vehicleType: 'petrol', fuelPrice: 100, mileage: 48, fixedMaint: 45
+        },
+        porter_grind: {
+          blinkitHours: 0, blinkitOph: 2.5, blinkitBase: 22, blinkitSurge: 8, blinkitDist: 2.4,
+          porterHours: 8, porterPaidKmHr: 15.5, porterRateKm: 8.5, porterDeadhead: 22,
+          beltMode: 'core', vehicleType: 'petrol', fuelPrice: 100, mileage: 48, fixedMaint: 50
+        },
+        ev_maximizer: {
+          blinkitHours: 5, blinkitOph: 2.75, blinkitBase: 22, blinkitSurge: 10, blinkitDist: 2.2,
+          porterHours: 5, porterPaidKmHr: 15, porterRateKm: 8.5, porterDeadhead: 18,
+          beltMode: 'core', vehicleType: 'ev', fuelPrice: 25, mileage: 85, fixedMaint: 160
+        }
+      };
+
+      document.querySelectorAll('.preset-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.preset;
+          if (presetConfigs[key]) {
+            state.params = { ...presetConfigs[key] };
+            syncInputsFromState();
+            saveState();
+            recalculate();
+            presetsModal.classList.add('hidden');
+            showToast('Applied Strategy Preset!');
+          }
+        });
+      });
+
+      // ==========================================
+      // TAB 2: INTERACTIVE DISPATCH SIMULATOR
+      // ==========================================
+      const coords = {
+        sigra: [260, 175],
+        rathyatra: [315, 215],
+        godowlia: [435, 205],
+        bhelupur: [345, 275],
+        durgakund: [320, 330],
+        lanka: [295, 375],
+        mahmoorganj: [155, 210],
+        cantt: [170, 85],
+        outer: [465, 395]
+      };
+
+      const dispatchPool = [
+        {
+          platform: 'BLINKIT',
+          title: 'Sigra Dark Store → Mahmoorganj',
+          desc: 'Quick grocery basket • Peak surge +₹10 active • Instant return to Sigra',
+          from: 'sigra', to: 'mahmoorganj',
+          dist: 2.1, payout: 32, mins: 18
+        },
+        {
+          platform: 'BLINKIT',
+          title: 'Sigra Dark Store → Rathyatra Crossing',
+          desc: '2-bag apartment drop • High order density zone',
+          from: 'sigra', to: 'rathyatra',
+          dist: 1.8, payout: 30, mins: 16
+        },
+        {
+          platform: 'PORTER',
+          title: 'Sigra (IP Mall) → Lanka (BHU Gate)',
+          desc: 'Commercial electronics box • Immediate return load at Lanka',
+          from: 'sigra', to: 'lanka',
+          dist: 5.8, payout: 52, mins: 24
+        },
+        {
+          platform: 'PORTER',
+          title: 'Lanka → Godowlia Wholesale Market',
+          desc: 'Boutique textile parcel • Heavy traffic near Chowk',
+          from: 'lanka', to: 'godowlia',
+          dist: 6.4, payout: 58, mins: 28
+        },
+        {
+          platform: 'PORTER',
+          title: 'Bhelupur → Cantt Station Parcel Office',
+          desc: 'Courier sack • Straight arterial road via Sigra',
+          from: 'bhelupur', to: 'cantt',
+          dist: 6.2, payout: 55, mins: 23
+        },
+        {
+          platform: 'PORTER',
+          title: 'Durgakund → Outer Ramnagar Industrial (22 km)',
+          desc: '⚠️ High deadhead warning: Low return order probability from outer belt',
+          from: 'durgakund', to: 'outer',
+          dist: 22.0, payout: 187, mins: 58
+        }
+      ];
+
+      let currentPingIdx = 2;
+      let simSession = { mins: 0, orders: 0, km: 0, profit: 0 };
+
+      function renderPing() {
+        const ping = dispatchPool[currentPingIdx];
+        const costPerKm = state.params.fuelPrice / state.params.mileage;
+        // Outer trips incur 60% empty return penalty in true profit calc
+        const effectiveKm = ping.to === 'outer' ? ping.dist * 1.6 : ping.dist * 1.15;
+        const trueProfit = Math.round(ping.payout - (effectiveKm * costPerKm));
+
+        const badge = document.getElementById('pingPlatformBadge');
+        badge.textContent = ping.platform === 'BLINKIT' ? 'BLINKIT SIGRA' : 'PORTER PARCEL';
+        badge.className = ping.platform === 'BLINKIT'
+          ? 'text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-amber-400/20 text-amber-700 dark:text-amber-300'
+          : 'text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-blue-600/15 text-blue-600 dark:text-blue-400';
+
+        document.getElementById('pingTimeEst').textContent = `Est. ${ping.mins} mins`;
+        document.getElementById('pingTitle').textContent = ping.title;
+        document.getElementById('pingDesc').textContent = ping.desc;
+        document.getElementById('pingDist').textContent = `${ping.dist.toFixed(1)} km`;
+        document.getElementById('pingPayout').textContent = `₹${ping.payout}`;
+        document.getElementById('pingNetProfit').textContent = `${trueProfit >= 0 ? '+' : ''}₹${trueProfit}`;
+        document.getElementById('pingNetProfit').className = `font-mono font-bold text-xs ${trueProfit >= 25 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'}`;
+
+        // Update SVG line
+        const line = document.getElementById('svgActiveRoute');
+        const c1 = coords[ping.from] || [260, 175];
+        const c2 = coords[ping.to] || [295, 375];
+        line.setAttribute('x1', c1[0]);
+        line.setAttribute('y1', c1[1]);
+        line.setAttribute('x2', c2[0]);
+        line.setAttribute('y2', c2[1]);
+        line.setAttribute('stroke', ping.platform === 'BLINKIT' ? '#F8CB46' : '#10b981');
+      }
+
+      document.getElementById('btnSimulatePing').addEventListener('click', () => {
+        currentPingIdx = (currentPingIdx + 1) % dispatchPool.length;
+        renderPing();
+      });
+
+      document.getElementById('btnSkipPing').addEventListener('click', () => {
+        currentPingIdx = (currentPingIdx + 1) % dispatchPool.length;
+        renderPing();
+      });
+
+      document.getElementById('btnAcceptPing').addEventListener('click', () => {
+        if (simSession.mins >= 480) {
+          showToast('8-Hour Shift Completed! Reset Run to start again.');
+          return;
+        }
+        const ping = dispatchPool[currentPingIdx];
+        const costPerKm = state.params.fuelPrice / state.params.mileage;
+        const effectiveKm = ping.to === 'outer' ? ping.dist * 1.6 : ping.dist * 1.15;
+        const trueProfit = Math.round(ping.payout - (effectiveKm * costPerKm));
+
+        simSession.mins += ping.mins;
+        simSession.orders += 1;
+        simSession.km += effectiveKm;
+        simSession.profit += trueProfit;
+
+        const hrs = Math.floor(simSession.mins / 60);
+        const mins = simSession.mins % 60;
+        document.getElementById('runClock').textContent = `${hrs}h ${String(mins).padStart(2, '0')}m / 8h`;
+        document.getElementById('runOrders').textContent = simSession.orders;
+        document.getElementById('runKm').textContent = simSession.km.toFixed(1);
+        document.getElementById('runProfit').textContent = `₹${simSession.profit}`;
+
+        currentPingIdx = (currentPingIdx + 1) % dispatchPool.length;
+        renderPing();
+        showToast(`Delivered! +₹${trueProfit} net added`);
+      });
+
+      document.getElementById('btnResetSimRun').addEventListener('click', () => {
+        simSession = { mins: 0, orders: 0, km: 0, profit: 0 };
+        document.getElementById('runClock').textContent = '0h 00m / 8h';
+        document.getElementById('runOrders').textContent = '0';
+        document.getElementById('runKm').textContent = '0.0';
+        document.getElementById('runProfit').textContent = '₹0';
+      });
+
+      document.querySelectorAll('.map-node').forEach(node => {
+        node.addEventListener('click', () => {
+          const n = node.dataset.node;
+          const idx = dispatchPool.findIndex(p => p.to === n || p.from === n);
+          if (idx !== -1) {
+            currentPingIdx = idx;
+            renderPing();
+          }
+        });
+      });
+
+      // ==========================================
+      // TAB 3: HOURLY HYBRID SCHEDULE PLANNER
+      // ==========================================
+      function renderHourlyPlanner() {
+        const grid = document.getElementById('hourlySlotsGrid');
+        let bHrs = 0;
+        let pHrs = 0;
+        let estNet = 0;
+        const costPerKm = state.params.fuelPrice / state.params.mileage;
+
+        grid.innerHTML = state.schedule.map((slot, idx) => {
+          let slotNet = 0;
+          if (slot.mode === 'blinkit') {
+            bHrs += 1;
+            const surgeBoost = slot.demand === 'Peak' ? 12 : 5;
+            const gross = state.params.blinkitOph * (state.params.blinkitBase + surgeBoost);
+            const km = state.params.blinkitOph * state.params.blinkitDist;
+            slotNet = Math.round(gross - km * costPerKm);
+            estNet += slotNet;
+          } else if (slot.mode === 'porter') {
+            pHrs += 1;
+            const gross = state.params.porterPaidKmHr * state.params.porterRateKm;
+            const km = state.params.porterPaidKmHr * (1 + state.params.porterDeadhead / 100);
+            slotNet = Math.round(gross - km * costPerKm);
+            estNet += slotNet;
+          }
+
+          const cardStyle = slot.mode === 'blinkit'
+            ? 'border-amber-400 bg-amber-400/10'
+            : slot.mode === 'porter'
+              ? 'border-blue-600 bg-blue-600/10'
+              : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 opacity-75';
+
+          const badgeText = slot.mode === 'blinkit'
+            ? `BLINKIT (+₹${slotNet})`
+            : slot.mode === 'porter'
+              ? `PORTER (+₹${slotNet})`
+              : 'REST / OFF';
+
+          const badgeColor = slot.mode === 'blinkit'
+            ? 'bg-amber-400 text-slate-950'
+            : slot.mode === 'porter'
+              ? 'bg-blue-600 text-white'
+              : 'bg-slate-200 dark:bg-slate-800 text-slate-500';
+
+          return `
+            <button type="button" data-slot="${idx}" class="slot-toggle text-left p-3 rounded-xl border ${cardStyle} transition flex items-center justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-bold text-xs">${slot.hour}</span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${slot.demand}</span>
+                </div>
+                <div class="text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">${slot.zone}</div>
+              </div>
+              <span class="text-[10px] font-mono font-extrabold px-2.5 py-1 rounded-lg ${badgeColor}">${badgeText}</span>
+            </button>
+          `;
+        }).join('');
+
+        document.getElementById('blkCountBlinkit').textContent = `${bHrs} hrs`;
+        document.getElementById('blkCountPorter').textContent = `${pHrs} hrs`;
+        document.getElementById('blkEstProfit').textContent = `₹${Math.max(0, estNet - state.params.fixedMaint)}`;
+
+        document.querySelectorAll('.slot-toggle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.slot, 10);
+            const order = ['blinkit', 'porter', 'off'];
+            const next = order[(order.indexOf(state.schedule[idx].mode) + 1) % order.length];
+            state.schedule[idx].mode = next;
+            saveState();
+            renderHourlyPlanner();
+          });
+        });
+      }
+
+      document.getElementById('btnAutoOptimizeBlocks').addEventListener('click', () => {
+        // Peak morning & evening on Blinkit (4h), midday commercial belt on Porter (4h)
+        const optimal = ['blinkit', 'blinkit', 'off', 'porter', 'porter', 'off', 'porter', 'porter', 'off', 'off', 'blinkit', 'blinkit', 'off', 'off'];
+        state.schedule.forEach((s, i) => { s.mode = optimal[i] || 'off'; });
+        saveState();
+        renderHourlyPlanner();
+        showToast('Optimized 8-Hour Varanasi Hybrid Schedule!');
+      });
+
+      document.getElementById('btnApplyBlocksToSim').addEventListener('click', () => {
+        const bHrs = state.schedule.filter(s => s.mode === 'blinkit').length;
+        const pHrs = state.schedule.filter(s => s.mode === 'porter').length;
+        state.params.blinkitHours = bHrs;
+        state.params.porterHours = pHrs;
+        syncInputsFromState();
+        saveState();
+        recalculate();
+        switchTab('simulator');
+        showToast(`Synced ${bHrs}h Blinkit + ${pHrs}h Porter to Simulator!`);
+      });
+
+      // ==========================================
+      // TAB 4: SAVED SCENARIOS & ACTUAL LOGS
+      // ==========================================
+      function renderLogsAndScenarios() {
+        const scList = document.getElementById('savedScenariosList');
+        if (state.savedScenarios.length === 0) {
+          scList.innerHTML = `<p class="text-xs text-slate-400">No saved setups yet. Click "+ Save Setup" in the Simulator tab.</p>`;
+        } else {
+          scList.innerHTML = state.savedScenarios.map(sc => `
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+              <div>
+                <div class="font-bold text-xs sm:text-sm">${sc.name}</div>
+                <div class="text-[11px] text-slate-500">${sc.summary} • <strong class="text-emerald-600 dark:text-emerald-400 font-mono">₹${sc.netDaily}/day</strong></div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button data-load-sc="${sc.id}" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-semibold">Load</button>
+                <button data-del-sc="${sc.id}" class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-800 text-xs text-rose-500">✕</button>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        document.querySelectorAll('[data-load-sc]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const sc = state.savedScenarios.find(x => x.id === btn.dataset.loadSc);
+            if (sc) {
+              state.params = { ...sc.params };
+              syncInputsFromState();
+              saveState();
+              recalculate();
+              switchTab('simulator');
+              showToast(`Loaded "${sc.name}"`);
+            }
+          });
+        });
+
+        document.querySelectorAll('[data-del-sc]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.savedScenarios = state.savedScenarios.filter(x => x.id !== btn.dataset.delSc);
+            saveState();
+            renderLogsAndScenarios();
+          });
+        });
+
+        const logList = document.getElementById('actualLogsList');
+        if (state.actualLogs.length === 0) {
+          logList.innerHTML = `<p class="text-xs text-slate-400">No shift logs recorded yet.</p>`;
+        } else {
+          logList.innerHTML = state.actualLogs.map(lg => `
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+              <div>
+                <span class="font-bold">${lg.note}</span>
+                <span class="text-[10px] text-slate-400 ml-1.5">${lg.date}</span>
+                <div class="text-[11px] text-slate-500 font-mono">Gross: ₹${lg.gross} | Fuel: -₹${lg.fuel}</div>
+              </div>
+              <div class="font-mono font-extrabold text-sm ${lg.net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}">
+                ₹${lg.net}
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      document.getElementById('btnSaveScenario').addEventListener('click', () => {
+        const p = state.params;
+        const m = latestMetrics;
+        const newSc = {
+          id: 'sc_' + Date.now(),
+          name: `Setup #${state.savedScenarios.length + 1} (${p.blinkitHours}h B + ${p.porterHours}h P)`,
+          summary: `${p.vehicleType.toUpperCase()} • ${Math.round(m.totalKm)} km/day`,
+          netDaily: Math.round(m.dailyNet),
+          params: { ...p }
+        };
+        state.savedScenarios.unshift(newSc);
+        saveState();
+        renderLogsAndScenarios();
+        showToast('Saved current setup to Saved/Log tab!');
+      });
+
+      document.getElementById('formAddLog').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const note = document.getElementById('logNote').value.trim();
+        const gross = parseFloat(document.getElementById('logGross').value) || 0;
+        const fuel = parseFloat(document.getElementById('logFuel').value) || 0;
+        const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+
+        state.actualLogs.unshift({
+          id: 'lg_' + Date.now(),
+          date: today,
+          note,
+          gross,
+          fuel,
+          net: Math.round(gross - fuel)
+        });
+        saveState();
+        renderLogsAndScenarios();
+        e.target.reset();
+        showToast('Shift earnings logged!');
+      });
+
+      document.getElementById('btnClearLogs').addEventListener('click', () => {
+        state.actualLogs = [];
+        saveState();
+        renderLogsAndScenarios();
+      });
+
+      // Initial Boot
+      applyTheme();
+      syncInputsFromState();
+      recalculate();
+      renderPing();
+      renderHourlyPlanner();
+      renderLogsAndScenarios();
+      switchTab(state.activeTab || 'simulator');
+    })();
+  </script>
+</body>
+</html>
